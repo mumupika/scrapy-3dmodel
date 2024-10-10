@@ -30,4 +30,5 @@ pip install -r requirements.txt
 ## TODO:
     Recovery from StaleElementRefrence at any time.
     Bad Network Connection.
+    Store in Json.
     
