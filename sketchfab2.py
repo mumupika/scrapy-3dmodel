@@ -283,7 +283,7 @@ def wait_download(file: str, count: int) -> None:
         else:
             continue
 
-print(f"下载完成。")
+    print(f"下载完成。")
 
 
 # TODO
@@ -390,6 +390,8 @@ def download(browser: webdriver.Chrome, actions: action_chains.ActionChains):
                     if download_button==None: continue
                     try_downloading(download_button,browser,i,actions)
                     download_index=i
+                    save_progress(download_index)
+                    time.sleep(random.randint(0,15)/10)
             except Exception as e:
                 print(e)
                 save_progress(download_index)
