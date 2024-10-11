@@ -328,12 +328,14 @@ def read_progress() -> tuple[int,list[str]] :
         download_index=json.load(f)
     f.close()
     
-    with open(url_path,'rb') as f:
-        download_url=pickle.load(f)
-    f.close()
+    try:
+        with open(url_path,'rb') as f:
+            download_url=pickle.load(f)
+        f.close()
     
-    assert(type(download_index)==int)
-    assert(type(download_url)==list)
+    except EOFError:
+        download_url=None
+    
     return download_index,download_url    
     
 def save_progress(download_index: int) -> None:
@@ -359,7 +361,7 @@ def download(browser: webdriver.Chrome, actions: action_chains.ActionChains):
     browser.get("https://sketchfab.com/3d-models/categories/animals-pets?features=downloadable&sort_by=-likeCount")
     download_index,download_url=read_progress()
     while 1:
-        if len(download_url) < download_index:
+        if download_url==None or len(download_url) < download_index:
             download_url=get_contents(browser,actions,download_url,download_index)
         else:
             download_index,download_url=read_progress()
