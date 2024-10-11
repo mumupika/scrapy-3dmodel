@@ -10,6 +10,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import os
 import random,json,pickle
+import zipfile,shutil
 
 
 def setup() -> tuple[webdriver.Chrome, action_chains.ActionChains]:
@@ -251,22 +252,38 @@ def wait_download(file: str, count: int) -> None:
         file (str): The file name.
     """
     file_name="".join(ch for ch in file if ch.isalnum() or ch=='-' or ch=='_')
-    
-            
     print(f"等待下载第{count}个文件:{file_name}.glb")
-    waiting_time=0
+    
     while not os.path.exists('./data/'+file_name+'.glb'):
         time.sleep(1)
-        waiting_time+=1
-        if waiting_time>=60:
-            # 可以修改成替换文件描述名
-            newfileName = max(os.listdir('./data'), key=lambda f: os.path.getctime(os.path.join('./data', f)))
-            newfileBaseName = os.path.splitext(newfileName)[0]
+        # 可以修改成替换文件描述名
+        newfileName = max(os.listdir('./data'), key=lambda f: os.path.getctime(os.path.join('./data', f)))
+        newfileBaseName,attribute_name = os.path.splitext(newfileName)[0],os.path.splitext(newfileName)[1]
+
+        # 检测到glb文件，下载完成。
+        if attribute_name=='.glb':
             os.rename('./data/'+file_name+'.txt','./data/'+newfileBaseName+'.txt')
             print(f"进行了名字替换。原名字:{file_name}.txt--->新名字:{newfileBaseName}.txt")
-            file_name=newfileBaseName
-            if os.path.exists('./data/'+file_name+'.glb'): break
-    print(f"下载完成。")
+            break
+
+        # 检测到压缩包，提取文件后下载完成。
+        elif attribute_name=='.zip':
+            zip_file=zipfile.ZipFile('./data/'+newfileName,'r')
+            filelist=zip_file.namelist()
+            zip_file.extract(filelist[0],'./data')
+            os.remove('./data/'+newfileName)
+            shutil.move('./data/'+filelist[0],'./data')
+            os.removedirs('./data/source')
+            newfileName = max(os.listdir('./data'), key=lambda f: os.path.getctime(os.path.join('./data', f)))
+            newfileBaseName,attribute_name = os.path.splitext(newfileName)[0],os.path.splitext(newfileName)[1]
+            os.rename('./data/'+file_name+'.txt','./data/'+newfileBaseName+'.txt')
+            print(f"进行了名字替换。原名字:{file_name}.txt--->新名字:{newfileBaseName}.txt")
+            break
+        
+        else:
+            continue
+
+print(f"下载完成。")
 
 
 # TODO
