@@ -31,3 +31,15 @@ pip install -r requirements.txt
     Recovery from StaleElementRefrence at any time.
     Bad Network Connection.
     
+### 从sketchfab 迁移到 sketchfab2
+
+10.11.2024: 我们刚刚发布了新的爬虫脚本`sketchfab2.py`和内容获取脚本`./progress/prepare_urls.py`脚本，旨在于改善原有的直接获取下载弹窗导致的不稳定状况。
+通过预先加载和储存下载url的方式进行。
+
+#### 直接迁移爬虫
+
+> 1. 首先，从sketchfab中获得您原有的下载进度，将其填入到`/progress/download_index.json`中。
+> 2. 清除并且新建一个`/progress/download_url.pkl`文件。
+> 3. 运行`sketchfab2.py`。
+
+您也可以自行先加载url。运行`prepare_urls.py`即可。
