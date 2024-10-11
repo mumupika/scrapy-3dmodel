@@ -11,8 +11,6 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import os
 import random,json,pickle
 
-from scrapy2 import scroll_to_bottom
-
 
 def setup() -> tuple[webdriver.Chrome, action_chains.ActionChains]:
     """
