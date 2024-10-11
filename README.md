@@ -44,3 +44,6 @@ pip install -r requirements.txt
 > 3. 运行`sketchfab2.py`。
 
 您也可以自行先加载url。运行`prepare_urls.py`即可。
+
+10.12.2024 00:40:34
+增加了對於下載了zip文件的處理。經詢問可以不保留texture。
