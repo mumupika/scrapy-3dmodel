@@ -9,7 +9,9 @@ from selenium.common import exceptions
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import os
-import random
+import random,json,pickle
+
+from scrapy2 import scroll_to_bottom
 
 
 def setup() -> tuple[webdriver.Chrome, action_chains.ActionChains]:
@@ -43,10 +45,6 @@ def setup() -> tuple[webdriver.Chrome, action_chains.ActionChains]:
     return browser,actions
 
 
-
-
-
-
 def login(browser: webdriver.Chrome) -> None:
     """
         log in the browser.
@@ -62,30 +60,27 @@ def login(browser: webdriver.Chrome) -> None:
     # 判断是否出现会话级别cookie，判断登录是否成功。
     while len(browser.get_cookies()) <= 4:
         
-        # # 寻找email并且输入。
-        # email=browser.find_element(By.XPATH,'/html/body/main/div/div[2]/div[1]/form/div/div[2]/div[1]/input')
-        # email_address='the.bird@sjtu.edu.cn'
-        # for char in email_address:
-        #         email.send_keys(char)
-        #         time.sleep(random.randrange(1,5)/10.)
-        # time.sleep(random.randrange(1,10)/10.)
-        # # 寻找passowrd并且输入。
-        # password=browser.find_element(By.XPATH,'/html/body/main/div/div[2]/div[1]/form/div/div[2]/div[2]/div/div/input')
-        # password_txt='open771013'
-        # for char in password_txt:
-        #     password.send_keys(char)
-        #     time.sleep(random.randrange(1,5)/10.)
-        # time.sleep(random.randrange(1,10)/10.)
+        # 寻找email并且输入。
+        email=browser.find_element(By.XPATH,'/html/body/main/div/div[2]/div[1]/form/div/div[2]/div[1]/input')
+        email_address='the.bird@sjtu.edu.cn'
+        for char in email_address:
+                email.send_keys(char)
+                time.sleep(random.randrange(1,5)/10.)
+        time.sleep(random.randrange(1,10)/10.)
+        # 寻找passowrd并且输入。
+        password=browser.find_element(By.XPATH,'/html/body/main/div/div[2]/div[1]/form/div/div[2]/div[2]/div/div/input')
+        password_txt='open771013'
+        for char in password_txt:
+            password.send_keys(char)
+            time.sleep(random.randrange(1,5)/10.)
+        time.sleep(random.randrange(1,10)/10.)
         
         input("输入账号密码点击登录按钮后按任意键继续...")
         time.sleep(random.randrange(10,30)/10.)
         if len(browser.get_cookies()) <= 4:
             time.sleep(random.randrange(10,20)/10.)
             browser.refresh()
- 
- 
- 
-        
+
 
 def check_downloaded(item: WebElement, downloaded: list[str], actions: action_chains.ActionChains) -> bool:
     """
@@ -109,89 +104,93 @@ def check_downloaded(item: WebElement, downloaded: list[str], actions: action_ch
     file_name+='.glb'
     return os.path.exists('./data/'+file_name)
     
-    
-
-
-
-
-
-def scroll_to_bottom(browser: webdriver.Chrome,actions: action_chains.ActionChains, scrolling: float) -> float:
+def get_contents(browser: webdriver.Chrome, actions: action_chains.ActionChains, download_url, download_index) -> list[str]:
     """
-    scroll to the bottom of the page.
-    
-    Args:
-        browser (webdriver.Chrome): browser.
-        actions (action_chains.ActionChains): action chain class.
-        scrolling (float): current scrolling distance.
-    
-    return:
-        scrolling-2000 (float): The last scrolling height.
-    """
-    height=float(browser.execute_script(("return document.body.scrollHeight")))
-    while scrolling < height:
-        height=browser.execute_script(("return document.body.scrollHeight"))
-        browser.execute_script(f"window.scrollBy(0,2500)")  
-        scrolling += 2500
-        time.sleep(1.5)
-    return height-2000
-
-
-
-
-# TODO
-def get_contents(browser: webdriver.Chrome,actions: action_chains.ActionChains, scrolling: float) -> tuple[WebElement,list[WebElement],float]:
-    """
-    To get the load_more button and the items.
+    To get the load_more button and get the download url.
     
     Args:
         browser (webdriver.Chrome): chrome window.
         actions (action_chains.ActionChains): action_chain.
 
     Returns:
-        tuple[WebElement,list]: WebElement for the load more button, list for download items.
+        list[str]: The download_urls.
     """
-    contents=browser.find_element(By.CLASS_NAME,'content')
-    scrolling=scroll_to_bottom(browser,actions,scrolling)
-    # 增加显式等待。
-    wait = WebDriverWait(contents,10.)
-    button_block=wait.until(EC.presence_of_element_located((By.XPATH,'div[3]/div/div/div/div[2]')))
-    items = wait.until(EC.presence_of_element_located((By.XPATH,'div[3]/div/div/div/div[1]')))
-    item_list=items.find_elements(By.CLASS_NAME,"c-grid__item.item")
-    return button_block,item_list,scrolling
+    scrolling = 0.
+    download_url=[]
+    while len(download_url) < download_index + 2000:
+        # scroll to the bottom of the page.
+        try:
+            download_url=[]
+            height=float(browser.execute_script(("return document.body.scrollHeight")))
+            while scrolling < height:
+                height=browser.execute_script(("return document.body.scrollHeight"))
+                browser.execute_script(f"window.scrollBy(0,2500)")  
+                scrolling += 2500
+                time.sleep(2)
 
+            # Get the contents of all the download page url.
+            contents = browser.find_element(By.CLASS_NAME,'content')
+            # wait explicitly.
+            wait=WebDriverWait(contents,10.)
+            items = wait.until(EC.presence_of_element_located((By.XPATH,'div[3]/div/div/div/div[1]')))
+            item_list=items.find_elements(By.CLASS_NAME,"c-grid__item.item")
+            # extract the url from the item.
+            for i in item_list:
+                url=i.find_element(By.CLASS_NAME,'card.card-model.pw_M_MRp').find_element(By.CLASS_NAME,'card__main.card-model__thumbnail').find_element(By.TAG_NAME,'a').get_attribute('href')
+                download_url.append(url)
+            
+            button_block=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'c-grid__button.--next')))
+            wait=WebDriverWait(button_block,10.)
+            button=wait.until(EC.element_to_be_clickable((By.TAG_NAME,'button')))
+            actions.scroll_to_element(button).perform()
+            scrolling = height
+            button.click()
+            time.sleep(2)
+            
+            
+        except Exception as e:
+            print(e)
+            input("Get contents error. press key to restart.")
+    
+    # save the urls into the pkl document.
+    with open('./progress/download_url.pkl','wb') as f:
+        pickle.dump(download_url,f)
+    f.close()
+    return download_url
+    
 
-
-
-
-def loading_pages(item: WebElement, count: int) -> WebElement:
+def loading_pages(url: str, count: int) -> WebElement:
     """
     Loading the pages of downloading.
 
     Args:
-        item (WebElement): _description_
-        count (int): _description_
+        url (str): the download page.
+        count (int): the current progress.
 
     Returns:
-        WebElement: _description_
+        WebElement: None represents not able to download.
     """
-    wait=WebDriverWait(item,5.)
+    browser.get(url)
+    wait=WebDriverWait(browser,5.)
     try:
-        download_page=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'help.card-model__feature.--downloads')))
-    except exceptions.TimeoutException as e:
-        time.sleep(3)
-        try:
-            item.find_element(By.CLASS_NAME,'help.card-model__feature.--downloads')
-        except exceptions.NoSuchElementException:
-            print(f"第{count}个文件页面不存在下载链接，跳过。")
-            return None
+        # 一级检测：是否存在下载按钮？
+        download_button=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'button.btn-textified.btn-medium.c-model-actions__button.--download')))
+        wait=WebDriverWait(browser,10.)
+        download_button = None
+        # 二级检测：尝试点击按钮进入下载页面。
+        while download_button==None:
+            try:
+                download_button=wait.until(EC.element_to_be_clickable((By.CLASS_NAME,'button.btn-textified.btn-medium.c-model-actions__button.--download')))
+            except exceptions.TimeoutException:
+                print(f"无法点击该下载链接。按任意键重试。")
+                input()
+                download_button = None
+        return download_button
     
-    return download_page
+    except exceptions.TimeoutException:
+        print(f"第{count}个文件不存在下载链接，跳过。")
+        return None
 
-
-
-
-
-# TODO: generate the descriptive text document in data.
 def generate_descriptions(browser: webdriver.Chrome, actions: action_chains.ActionChains) -> str:
     """
     generate the descriptive text document in data.
@@ -202,7 +201,7 @@ def generate_descriptions(browser: webdriver.Chrome, actions: action_chains.Acti
     Returns:
         str: The descriptive strings of the downloaded item.
     """
-    popup_container=browser.find_element(By.CLASS_NAME,'popup-container')
+    popup_container=browser.find_element(By.CLASS_NAME,'main')
     label=popup_container.find_element(By.CLASS_NAME,'model-name__label')
     object_name=label.text.lower()
     file_name=object_name.replace(' ','_').replace('(','').replace(')','').replace(':','')
@@ -271,64 +270,84 @@ def wait_download(file: str, count: int) -> None:
             if os.path.exists('./data/'+file_name+'.glb'): break
     print(f"下载完成。")
 
-      
-def try_downloading(page: WebElement, browser: webdriver.Chrome, count: int, actions: action_chains.ActionChains) -> None:
+
+# TODO
+def try_downloading(button: WebElement, browser: webdriver.Chrome, count: int, actions: action_chains.ActionChains) -> None:
     """
     Try download item one by one. Also provide a simple recovery object.
 
     Args:
-        page (WebElement): The current page.
+        button (WebElement): The current page download button.
         browser (webdriver.Chrome): The browser.
         count (int): Counting numbers of downloaded index.
         actions (action_chains.ActionChains): The chain of performing actions.
     """
-    actions.scroll_to_element(page).perform()
-    page.click()
-    time.sleep(3)
-    wait=WebDriverWait(browser,15.)
-    close=wait.until(EC.element_to_be_clickable((By.CLASS_NAME,'c-popup__close')))
-    close.click()
-    time.sleep(3)
-    
-    try:
-        download_button=wait.until(EC.element_to_be_clickable((By.CLASS_NAME,'button.btn-textified.btn-medium.c-model-actions__button.--download')))
-    except exceptions.NoSuchElementException:
-        print(f"第{count}个元素不存在下载链接，跳过...")
-        return
     
     # generate description file.
     file_downloading=generate_descriptions(browser,actions)
     
     # click the download button.
-    actions.scroll_to_element(download_button).perform()
-    download_button.click()
+    actions.scroll_to_element(button).perform()
+    button.click()
     time.sleep(3)
     
-    # find all download links.
-    wait=WebDriverWait(browser,10)
-    glb_col=wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME,'AUfL6oST')))
-    actions.scroll_to_element(glb_col[3]).perform()
-    time.sleep(1)
-    
-    # find the first downloadable glb file.
-    wait=WebDriverWait(glb_col[3],10)
-    button_glb=wait.until(EC.element_to_be_clickable((By.TAG_NAME,'button')))
-    actions.scroll_to_element(button_glb).perform()
-    button_glb.click()
-    
-    # find the pop-up close button.
-    wait_download(file_downloading,count)
+    # graded finding the glb document.
     wait=WebDriverWait(browser,10.)
-    close=wait.until(EC.element_to_be_clickable((By.CLASS_NAME,'c-popup__close')))
-    close.click()
-    time.sleep(1)
+    download_columns=wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME,'AUfL6oST')))
+    # Find the first proper item.
+    for col in download_columns:
+        wait=WebDriverWait(col,5.)
+        format=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'H6stunQl'))).text
+        if format[:4]=='.glb':
+            column_selected=col
+            break
     
-    # return to the former page.
-    wait=WebDriverWait(browser,10)
-    close=wait.until(EC.element_to_be_clickable((By.CLASS_NAME,'c-model-page-popup__close.fa-regular.fa-times')))
-    close.click()
-    time.sleep(1)
-            
+    print(f"文件大小和格式:{format}")
+    actions.scroll_to_element(column_selected).perform()
+    wait=WebDriverWait(column_selected,10.)
+    button=wait.until(EC.presence_of_element_located((By.TAG_NAME,'button')))
+    button.click()
+    wait_download(file_downloading,count)
+    
+    
+    
+    
+
+def read_progress() -> tuple[int,list[str]] :
+    """
+    Get the current progress of download url and progress.
+
+    Returns:
+        tuple[int,list[str]]: the download progress and stored url.
+    """
+    if not os.path.exists('./progress'):
+        os.makedirs('./progress')
+    
+    index_path = os.path.join('./progress','download_index.json')
+    url_path = os.path.join('./progress','download_url.pkl')
+    
+    with open(index_path,'r') as f:
+        download_index=json.load(f)
+    f.close()
+    
+    with open(url_path,'rb') as f:
+        download_url=pickle.load(f)
+    f.close()
+    
+    assert(type(download_index)==int)
+    assert(type(download_url)==list)
+    return download_index,download_url    
+    
+def save_progress(download_index: int) -> None:
+    """
+    To save the current progress into json.
+
+    Args:
+        download_index (int): The download index.
+    """
+    with open('./progress/download_index.json','w') as f:
+        json.dump(download_index,f)
+    f.close()
 
 def download(browser: webdriver.Chrome, actions: action_chains.ActionChains):
     """
@@ -338,33 +357,29 @@ def download(browser: webdriver.Chrome, actions: action_chains.ActionChains):
         browser (webdriver.Chrome): browser
         actions (action_chains.ActionChains): action chains.
     """
-    item_downloaded_list=os.listdir('./data')
+    item_downloaded_list = os.listdir('./data')
     browser.get("https://sketchfab.com/3d-models/categories/animals-pets?features=downloadable&sort_by=-likeCount")
-    scrolling=0.
-    item_downloaded_index=1352
-    # 1070
-    while len(item_downloaded_list)//2 < 10000:
-        try:
-            load_more_button,item_list,scrolling=get_contents(browser,actions,scrolling)
-            
-            for i in range(item_downloaded_index+1,len(item_list)):
-                if check_downloaded(item_list[i],item_downloaded_list,actions): continue
-                download_page=loading_pages(item_list[i],i)
-                if download_page==None: continue    # 不存在链接，跳过。
-                try_downloading(download_page,browser,i,actions)
-                item_downloaded_index=i
+    download_index,download_url=read_progress()
+    while 1:
+        if len(download_url) < download_index:
+            download_url=get_contents(browser,actions,download_url,download_index)
+        else:
+            download_index,download_url=read_progress()
+        # Try to get downloaded. quit when all url are used.
+        while download_index < len(download_url):
+            try:
+                for i in range(download_index+1,len(download_url)):
+                    download_button = loading_pages(download_url[i],i)
+                    if download_button==None: continue
+                    try_downloading(download_button,browser,i,actions)
+                    download_index=i
+            except Exception as e:
+                print(e)
+                save_progress(download_index)
+                input("Exceptions happened. Press any key to restart.")
                 
-            
-            actions.scroll_to_element(load_more_button).perform()
-            load_more_button.click()
-            time.sleep(1)
-        except Exception as e:
-            print(e)
-            input("Exceptions happened. Press any key to restart.")
-            browser.get("https://sketchfab.com/3d-models/categories/animals-pets?features=downloadable&sort_by=-likeCount")
-            scrolling=0.
-
-
+    
+    
 
 if __name__=='__main__':
     browser,actions=setup()
