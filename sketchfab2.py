@@ -302,7 +302,10 @@ def try_downloading(button: WebElement, browser: webdriver.Chrome, count: int, a
     file_downloading=generate_descriptions(browser,actions)
     
     # click the download button.
-    actions.scroll_to_element(button).perform()
+    wait=WebDriverWait(browser,10.)
+    button=wait.until(EC.element_to_be_clickable((By.CLASS_NAME,'button.btn-textified.btn-medium.c-model-actions__button.--download')))
+    column=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'owner-wrapper')))
+    actions.scroll_to_element(column).perform()
     button.click()
     time.sleep(3)
     
