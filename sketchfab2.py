@@ -102,7 +102,7 @@ def check_downloaded(item: WebElement, downloaded: list[str], actions: action_ch
     file_name+='.glb'
     return os.path.exists('./data/'+file_name)
     
-def get_contents(browser: webdriver.Chrome, actions: action_chains.ActionChains, download_url, download_index) -> list[str]:
+def get_contents(browser: webdriver.Chrome, actions: action_chains.ActionChains, download_url:list[str], download_index:int) -> list[str]:
     """
     To get the load_more button and get the download url.
     
