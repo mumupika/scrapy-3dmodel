@@ -11,15 +11,15 @@ pip install -r requirements.txt
 ## Part 1 ChromeDriver
 用谷歌chrome访问[这里](https://googlechromelabs.github.io/chrome-for-testing/known-good-versions-with-downloads.json)寻找对应版本/系统的谷歌驱动。
 
-![alt text](<1.png>)
+![alt text](<./1.png>)
 
 注意勾选pretty-print。
 安装完成后记得将其加入你的命令行中。（windows 添加环境变量），直到在powershell/cmd中输入chromedriver可以有输出为止。
 
-![alt text](<2.png>)
-![alt text](<3.png>)
-![alt text](<4.png>)
-![alt text](<5.png>)
+![alt text](<./2.png>)
+![alt text](<./3.png>)
+![alt text](<./4.png>)
+![alt text](<./5.png>)
 
 ## Part 2 爬虫
 
@@ -30,6 +30,7 @@ pip install -r requirements.txt
 ## TODO:
     Recovery from StaleElementRefrence at any time.
     Bad Network Connection.
+    Store in Json.
     
 ### 从sketchfab 迁移到 sketchfab2
 
