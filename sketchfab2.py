@@ -312,13 +312,15 @@ def try_downloading(button: WebElement, browser: webdriver.Chrome, count: int, a
     # graded finding the glb document.
     wait=WebDriverWait(browser,10.)
     download_columns=wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME,'AUfL6oST')))
-    # Find the first proper item.
+    # Find the first proper item. Do not want download compressed package.
+    i=0
     for col in download_columns:
         wait=WebDriverWait(col,5.)
         format=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'H6stunQl'))).text
-        if format[:4]=='.glb':
+        if format[:4]=='.glb' and i!=0:
             column_selected=col
             break
+        i+=1
     
     print(f"文件大小和格式:{format}")
     actions.scroll_to_element(column_selected).perform()
