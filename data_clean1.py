@@ -23,3 +23,11 @@ for item in item_list:
     if regex.match(item):
         os.remove('./data/'+item)
         print(f"删除重复文件:{item}")
+
+filelist=os.listdir('/Volumes/资料宗卷 1/data')
+for i in range(len(filelist)):
+    file=filelist[i]
+    fileBaseName,attributeName=os.path.splitext(file)
+    if not (os.path.exists('/Volumes/资料宗卷 1/data/'+fileBaseName+'.txt') and os.path.exists('/Volumes/资料宗卷 1/data/'+fileBaseName+'.glb')):
+        print(f"delete {file}")
+        os.remove('/Volumes/资料宗卷 1/data/'+file)
