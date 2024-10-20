@@ -29,7 +29,7 @@ def Windows_setup(web ='https://sketchfab.com/login',data = 'data') -> tuple[web
     prefs={
         'download.default_directory':fr'{path}\{data}',
         'User-Agent':  r'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0  Safari/537.36',
-        #"profile.managed_default_content_settings.images": 2,
+        "profile.managed_default_content_settings.images": 2,
         'permissions.default.stylesheet':2,
         'blink-settings':'imagesEnabled=false',
         'disable-media-session-api':'true',
@@ -75,28 +75,25 @@ def get_contents(browser: webdriver.Chrome, actions: action_chains.ActionChains,
                 height=browser.execute_script(("return document.body.scrollHeight"))
                 browser.execute_script(f"window.scrollBy(0,2500)")  
                 scrolling += 2500
-                time.sleep(2)
-
-            browser.execute_script("window.scrollBy(0, -600)")
-            scrolling = height - 600
+                time.sleep(1)
+                
+            scrolling = height 
             
             # Get the contents of all the download page url.
             contents = browser.find_element(By.CLASS_NAME,'content')
             # wait explicitly.
             wait=WebDriverWait(contents,10.)
-            items = wait.until(EC.presence_of_element_located((By.XPATH,'div[3]/div/div/div/div[1]')))
+            items = wait.until(EC.presence_of_element_located((By.XPATH,'div[2]/div/div/div/div[1]')))
             item_list=items.find_elements(By.CLASS_NAME,"c-grid__item.item")
             # extract the url from the item.
             for i in item_list:
                 url=i.find_element(By.CLASS_NAME,'card.card-model.pw_M_MRp').find_element(By.CLASS_NAME,'card__main.card-model__thumbnail').find_element(By.TAG_NAME,'a').get_attribute('href')
                 download_url.append(url)
-            
-            button_block=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'c-grid__button.--next')))
-            wait=WebDriverWait(button_block,10.)
-            button=wait.until(EC.element_to_be_clickable((By.TAG_NAME,'button')))
+
+            button=wait.until(EC.element_to_be_clickable((By.XPATH,'div[2]/div/div/div/div[2]')))
             actions.scroll_to_element(button).perform()
             button.click()
-            time.sleep(0.5)
+            time.sleep(1)
             
             
         except Exception as e:
