@@ -66,10 +66,12 @@ def get_contents(browser: webdriver.Chrome, actions: action_chains.ActionChains,
         list[str]: The download_urls.
     """
     scrolling = 0.
-    while len(download_url) < needed:
+    
+    for idx in range(needed):
         # scroll to the bottom of the page.
+        if idx%10 == 0:
+            print(f'scroll {idx} times')
         try:
-            download_url=[]
             height=float(browser.execute_script(("return document.body.scrollHeight")))
             while scrolling < height:
                 height=browser.execute_script(("return document.body.scrollHeight"))
@@ -78,18 +80,8 @@ def get_contents(browser: webdriver.Chrome, actions: action_chains.ActionChains,
                 time.sleep(1)
                 
             scrolling = height 
-            
-            # Get the contents of all the download page url.
             contents = browser.find_element(By.CLASS_NAME,'content')
-            # wait explicitly.
             wait=WebDriverWait(contents,10.)
-            items = wait.until(EC.presence_of_element_located((By.XPATH,'div[2]/div/div/div/div[1]')))
-            item_list=items.find_elements(By.CLASS_NAME,"c-grid__item.item")
-            # extract the url from the item.
-            for i in item_list:
-                url=i.find_element(By.CLASS_NAME,'card.card-model.pw_M_MRp').find_element(By.CLASS_NAME,'card__main.card-model__thumbnail').find_element(By.TAG_NAME,'a').get_attribute('href')
-                download_url.append(url)
-
             button=wait.until(EC.element_to_be_clickable((By.XPATH,'div[2]/div/div/div/div[2]')))
             actions.scroll_to_element(button).perform()
             button.click()
@@ -97,6 +89,23 @@ def get_contents(browser: webdriver.Chrome, actions: action_chains.ActionChains,
             
             
         except Exception as e:
+            print(e)
+            input("Get contents error. press key to restart.")
+    
+    try:
+        download_url=[]
+        # Get the contents of all the download page url.
+        contents = browser.find_element(By.CLASS_NAME,'content')
+        # wait explicitly.
+        wait=WebDriverWait(contents,10.)
+        items = wait.until(EC.presence_of_element_located((By.XPATH,'div[2]/div/div/div/div[1]')))
+        item_list=items.find_elements(By.CLASS_NAME,"c-grid__item.item")
+        # extract the url from the item.
+        for i in item_list:
+            url=i.find_element(By.CLASS_NAME,'card.card-model.pw_M_MRp').find_element(By.CLASS_NAME,'card__main.card-model__thumbnail').find_element(By.TAG_NAME,'a').get_attribute('href')
+            download_url.append(url)    
+    
+    except Exception as e:
             print(e)
             input("Get contents error. press key to restart.")
     
