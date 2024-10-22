@@ -169,18 +169,17 @@ def generate_descriptions(browser: webdriver.Chrome, actions: action_chains.Acti
     object_name=label.text.lower()
     file_name=object_name.replace(' ','_').replace('(','').replace(')','').replace(':','')
     file_name="".join(ch for ch in file_name if ch.isalnum() or ch=='-' or ch=='_')
-    
-    
     file_name+='.txt'
     
+    
     wait=WebDriverWait(popup_container,10.)
-
+    
     
     try:
         meta_data=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'c-model-metadata')))
     except Exception as e:
         print(e)
-        input('Exceptions happend. Press any key to restart.')
+        input('Exceptions happend when generate descriptions. Press any key to restart.')
     
     actions.scroll_to_element(meta_data).perform()
     description=meta_data.find_element(By.ID,"descriptionContent")
@@ -222,7 +221,7 @@ def wait_download(file: str, count: int) -> None:
     print(f"等待下载第{count}个文件:{file_name}.glb")
     
     while not os.path.exists('./data/'+file_name+'.glb'):
-        time.sleep(3)
+        time.sleep(2)
         # 可以修改成替换文件描述名
         newfileName = max(os.listdir('./data'), key=lambda f: os.path.getctime(os.path.join('./data', f)))
         newfileBaseName,attribute_name = os.path.splitext(newfileName)[0],os.path.splitext(newfileName)[1]
@@ -274,7 +273,7 @@ def try_downloading(button: WebElement, browser: webdriver.Chrome, count: int, a
     column=wait.until(EC.presence_of_element_located((By.CLASS_NAME,'owner-wrapper')))
     actions.scroll_to_element(column).perform()
     button.click()
-    time.sleep(3)
+    time.sleep(2)
     
     # graded finding the glb document.
     wait=WebDriverWait(browser,10.)
@@ -345,14 +344,9 @@ def download(browser: webdriver.Chrome, actions: action_chains.ActionChains):
         browser (webdriver.Chrome): browser
         actions (action_chains.ActionChains): action chains.
     """
-    item_downloaded_list = os.listdir('./data')
-    browser.get("https://sketchfab.com/3d-models/categories/animals-pets?features=downloadable&sort_by=-likeCount")
     download_index,download_url=read_progress()
     while 1:
-        if download_url==None or len(download_url) < download_index:
-            download_url=get_contents(browser,actions,download_url,download_index)
-        else:
-            download_index,download_url=read_progress()
+        download_index,download_url=read_progress()
         # Try to get downloaded. quit when all url are used.
         while download_index < len(download_url):
             try:
@@ -368,7 +362,7 @@ def download(browser: webdriver.Chrome, actions: action_chains.ActionChains):
             except Exception as e:
                 print(e)
                 save_progress(download_index)
-                input("Exceptions happened. Press any key to restart.")
+                input("Exceptions happened when download. Press any key to restart.")
                 
    
 
